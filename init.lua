@@ -909,6 +909,71 @@ require('lazy').setup({
     'tpope/vim-surround',
   },
 
+  {
+    'nvim-neo-tree/neo-tree.nvim',
+    branch = 'v3.x',
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'nvim-tree/nvim-web-devicons', -- not strictly required, but recommended
+      'MunifTanjim/nui.nvim',
+      -- {"3rd/image.nvim", opts = {}}, -- Optional image support in preview window: See `# Preview Mode` for more information
+    },
+    lazy = false, -- neo-tree will lazily load itself
+    ---@module "neo-tree"
+    ---@type neotree.Config?
+    opts = {
+      -- fill any relevant options here
+    },
+  },
+
+  {
+    'julienvincent/nvim-paredit',
+    config = function()
+      local paredit = require 'nvim-paredit'
+
+      paredit.setup {
+        keys = {
+          ['<c-h>'] = { paredit.api.barf_backwards, 'barf forwards' },
+
+          ['<c-j>'] = { paredit.api.slurp_forwards },
+          ['<c-k>'] = { paredit.api.raise_element },
+
+          ['<c-l>'] = { paredit.api.barf_forwards, 'barf forwards' },
+
+          ['<c-9>'] = {
+            paredit.api.move_to_parent_form_start,
+            'move to parent form start',
+            repeatable = false,
+            mode = { 'n', 'v' },
+          },
+          ['<c-0>'] = {
+            paredit.api.move_to_parent_form_end,
+            'move to parent form end',
+            repeatable = false,
+            mode = { 'n', 'v' },
+          },
+        },
+      }
+    end,
+  },
+
+  {
+    'nvim-neo-tree/neo-tree.nvim',
+    branch = 'v3.x',
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'nvim-tree/nvim-web-devicons', -- not strictly required, but recommended
+      'MunifTanjim/nui.nvim',
+      -- {"3rd/image.nvim", opts = {}}, -- Optional image support in preview window: See `# Preview Mode` for more information
+    },
+    lazy = false, -- neo-tree will lazily load itself
+    ---@module "neo-tree"
+    ---@type neotree.Config?
+    opts = {
+      -- fill any relevant options here
+    },
+  },
+
   { -- You can easily change to a different colorscheme.
     -- Change the name of the colorscheme plugin below, and then
     -- change the command in the config to whatever the name of that colorscheme is.
@@ -928,6 +993,13 @@ require('lazy').setup({
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
       vim.cmd.colorscheme 'poimandres'
+    end,
+  },
+
+  {
+    'xiyaowong/transparent.nvim',
+    config = function()
+      require('transparent').clear_prefix 'NeoTree'
     end,
   },
 
