@@ -1,4 +1,5 @@
 --[[
+--
 
 =====================================================================
 ==================== READ THIS BEFORE CONTINUING ====================
@@ -129,6 +130,11 @@ vim.o.undofile = true
 vim.o.ignorecase = true
 vim.o.smartcase = true
 
+vim.o.smartindent = true
+
+vim.o.shiftwidth = 2
+vim.o.tabstop = 2
+
 -- Keep signcolumn on by default
 vim.o.signcolumn = 'no'
 
@@ -140,7 +146,6 @@ vim.o.timeoutlen = 300
 
 -- Configure how new splits should be opened
 vim.o.splitright = true
-vim.o.splitbelow = true
 
 -- Sets how neovim will display certain whitespace characters in the editor.
 --  See `:help 'list'`
@@ -305,7 +310,7 @@ require('lazy').setup({
     opts = {
       -- delay between pressing a key and opening which-key (milliseconds)
       -- this setting is independent of vim.o.timeoutlen
-      delay = 0,
+      delay = 500,
       icons = {
         -- set icon mappings to true if you have a Nerd Font
         mappings = vim.g.have_nerd_font,
@@ -436,8 +441,9 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
-      vim.keymap.set('n', '<c-p>', builtin.buffers, { desc = '[ ] Find existing buffers' })
-      vim.keymap.set('n', '<c-p><c-p>', builtin.builtin, { desc = '[ ] search color schemes' })
+      vim.keymap.set('n', '<c-p><c-p>', builtin.find_files, { desc = '[S]earch [F]iles' })
+
+      vim.keymap.set('n', '<C-b>', '<Cmd>Neotree toggle<CR>')
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -685,7 +691,9 @@ require('lazy').setup({
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         -- ts_ls = {},
         --
-
+        -- clojure = {
+        --   filetype_overrides = { 'clj' },
+        -- },
         lua_ls = {
           -- cmd = { ... },
           -- filetypes = { ... },
@@ -883,6 +891,18 @@ require('lazy').setup({
   },
 
   {
+    'hrsh7th/nvim-cmp',
+  },
+
+  {
+    'psliwka/vim-smoothie',
+    event = 'VeryLazy',
+    init = function()
+      vim.g['smoothie_remapped_commands'] = { '<C-D>', '<C-U>', 'gg', 'G', 'n', 'N', 'j', 'k' }
+    end,
+  },
+
+  {
     'olivercederborg/poimandres.nvim',
     lazy = false,
     priority = 1000,
@@ -910,35 +930,14 @@ require('lazy').setup({
   },
 
   {
-    'nvim-neo-tree/neo-tree.nvim',
-    branch = 'v3.x',
-    dependencies = {
-      'nvim-lua/plenary.nvim',
-      'nvim-tree/nvim-web-devicons', -- not strictly required, but recommended
-      'MunifTanjim/nui.nvim',
-      -- {"3rd/image.nvim", opts = {}}, -- Optional image support in preview window: See `# Preview Mode` for more information
-    },
-    lazy = false, -- neo-tree will lazily load itself
-    ---@module "neo-tree"
-    ---@type neotree.Config?
-    opts = {
-      -- fill any relevant options here
-    },
-  },
-
-  {
     'julienvincent/nvim-paredit',
     config = function()
       local paredit = require 'nvim-paredit'
 
       paredit.setup {
         keys = {
-          ['<c-h>'] = { paredit.api.barf_backwards, 'barf forwards' },
-
-          ['<c-j>'] = { paredit.api.slurp_forwards },
-          ['<c-k>'] = { paredit.api.raise_element },
-
           ['<c-l>'] = { paredit.api.barf_forwards, 'barf forwards' },
+          ['<c-j>'] = { paredit.api.slurp_forwards },
 
           ['<c-9>'] = {
             paredit.api.move_to_parent_form_start,
@@ -964,14 +963,36 @@ require('lazy').setup({
       'nvim-lua/plenary.nvim',
       'nvim-tree/nvim-web-devicons', -- not strictly required, but recommended
       'MunifTanjim/nui.nvim',
-      -- {"3rd/image.nvim", opts = {}}, -- Optional image support in preview window: See `# Preview Mode` for more information
+      -- { '3rd/image.nvim', opts = {} }, -- Optional image support in preview window: See `# Preview Mode` for more information
     },
     lazy = false, -- neo-tree will lazily load itself
     ---@module "neo-tree"
     ---@type neotree.Config?
     opts = {
       -- fill any relevant options here
+      coxpcall,
+      window = { position = 'right' },
     },
+    config = function()
+      require('neo-tree').setup {
+        filesystem = {
+          window = {
+            mappings = {
+              ['<F5>'] = 'refresh',
+              ['o'] = 'open',
+            },
+          },
+        },
+      }
+    end,
+  },
+
+  {
+    'windwp/nvim-autopairs',
+    event = 'InsertEnter',
+    config = true,
+    -- use opts = {} for passing setup options
+    -- this is equivalent to setup({}) function
   },
 
   { -- You can easily change to a different colorscheme.
@@ -999,7 +1020,9 @@ require('lazy').setup({
   {
     'xiyaowong/transparent.nvim',
     config = function()
-      require('transparent').clear_prefix 'NeoTree'
+      local trans = require 'transparent'
+      trans.clear_prefix 'NeoTree'
+      trans.clear_prefix 'Telescope'
     end,
   },
 
@@ -1043,6 +1066,12 @@ require('lazy').setup({
       --  Check out: https://github.com/echasnovski/mini.nvim
     end,
   },
+  {
+    'HiPhish/rainbow-delimiters.nvim',
+    lazy = false,
+    main = 'rainbow-delimiters.setup',
+    opts = {},
+  },
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
@@ -1061,12 +1090,77 @@ require('lazy').setup({
       },
       indent = { enable = true, disable = { 'ruby' } },
     },
+    { 'luochen1990/rainbow' },
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:
     --
     --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
+    -- default configuration
+    {
+      'RRethy/vim-illuminate',
+      config = function()
+        require('illuminate').configure {
+          -- providers: provider used to get references in the buffer, ordered by priority
+          providers = {
+            'lsp',
+            'treesitter',
+            'regex',
+          },
+          -- delay: delay in milliseconds
+          delay = 100,
+          -- filetype_overrides: filetype specific overrides.
+          -- The keys are strings to represent the filetype while the values are tables that
+          -- supports the same keys passed to .configure except for filetypes_denylist and filetypes_allowlist
+          filetype_overrides = {},
+          -- filetypes_denylist: filetypes to not illuminate, this overrides filetypes_allowlist
+          filetypes_denylist = {
+            'dirbuf',
+            'dirvish',
+            'fugitive',
+          },
+          -- filetypes_allowlist: filetypes to illuminate, this is overridden by filetypes_denylist
+          -- You must set filetypes_denylist = {} to override the defaults to allow filetypes_allowlist to take effect
+          filetypes_allowlist = {},
+          -- modes_denylist: modes to not illuminate, this overrides modes_allowlist
+          -- See `:help mode()` for possible values
+          modes_denylist = {},
+          -- modes_allowlist: modes to illuminate, this is overridden by modes_denylist
+          -- See `:help mode()` for possible values
+          modes_allowlist = {},
+          -- providers_regex_syntax_denylist: syntax to not illuminate, this overrides providers_regex_syntax_allowlist
+          -- Only applies to the 'regex' provider
+          -- Use :echom synIDattr(synIDtrans(synID(line('.'), col('.'), 1)), 'name')
+          providers_regex_syntax_denylist = {},
+          -- providers_regex_syntax_allowlist: syntax to illuminate, this is overridden by providers_regex_syntax_denylist
+          -- Only applies to the 'regex' provider
+          -- Use :echom synIDattr(synIDtrans(synID(line('.'), col('.'), 1)), 'name')
+          providers_regex_syntax_allowlist = {},
+          -- under_cursor: whether or not to illuminate under the cursor
+          under_cursor = true,
+          -- large_file_cutoff: number of lines at which to use large_file_config
+          -- The `under_cursor` option is disabled when this cutoff is hit
+          large_file_cutoff = 10000,
+          -- large_file_config: config to use for large files (based on large_file_cutoff).
+          -- Supports the same keys passed to .configure
+          -- If nil, vim-illuminate will be disabled for large files.
+          large_file_overrides = nil,
+          -- min_count_to_highlight: minimum number of matches required to perform highlighting
+          min_count_to_highlight = 1,
+          -- should_enable: a callback that overrides all other settings to
+          -- enable/disable illumination. This will be called a lot so don't do
+          -- anything expensive in it.
+          should_enable = function(bufnr)
+            return true
+          end,
+          -- case_insensitive_regex: sets regex case sensitivity
+          case_insensitive_regex = false,
+          -- disable_keymaps: disable default keymaps
+          disable_keymaps = false,
+        }
+      end,
+    },
   },
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
@@ -1127,4 +1221,7 @@ vim.cmd [[
   highlight NonText guibg=none
   highlight Normal ctermbg=none
   highlight NonText ctermbg=none
+  highlight Normal guifg=none
 ]]
+
+vim.o.cursorline = true
