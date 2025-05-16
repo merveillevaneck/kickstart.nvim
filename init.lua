@@ -1,5 +1,6 @@
 --[[
 --
+--
 
 =====================================================================
 ==================== READ THIS BEFORE CONTINUING ====================
@@ -84,7 +85,6 @@ I hope you enjoy your Neovim journey,
 
 P.S. You can delete this when you're done too. It's your config now! :)
 --]]
-
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
@@ -116,7 +116,8 @@ vim.o.showmode = false
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
 -- vim.schedule(function()
---   vim.o.clipboard = 'unnamedplus'
+--   vim.o.clipboard = 'unnamed'
+--   vim.g.clipboard = 'pbcopy'
 -- end)
 --
 
@@ -177,7 +178,10 @@ vim.o.confirm = true
 
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
-vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+-- vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+-- vim.keymap.set('n', '<leader>')
+
+-- vim.keymap.set('')
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
@@ -188,7 +192,7 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 --
 -- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
 -- or just use <C-\><C-n> to exit terminal mode
-vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
+-- vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
 -- TIP: Disable arrow keys in normal mode
 -- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
@@ -203,7 +207,8 @@ vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' }
 vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
-vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+
+-- vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
@@ -222,6 +227,26 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
   callback = function()
     vim.hl.on_yank()
+  end,
+})
+
+local ignore_registers = { '_', '+' }
+vim.api.nvim_create_autocmd('TextYankPost', {
+  pattern = '*',
+  group = vim.api.nvim_create_augroup('ClipboardYank', { clear = true }),
+  desc = 'Yank to clipboard',
+  callback = function()
+    if vim.tbl_contains(ignore_registers, vim.v.register) then
+      return
+    end
+    if vim.v.operator ~= 'y' then
+      return
+    end
+
+    local value = vim.fn.getreg(vim.v.register, 1)
+    local type = vim.fn.getregtype(vim.v.register)
+    vim.fn.setreg('+', value, type)
+    vim.fn.setreg('p', value, type)
   end,
 })
 
@@ -290,6 +315,56 @@ require('lazy').setup({
     },
   },
 
+  {
+    'nvimtools/hydra.nvim',
+    event = 'VeryLazy',
+    config = function()
+      local Hydra = require 'hydra'
+      Hydra {
+        name = 'Window Manager',
+        mode = 'n',
+        config = {
+          invoke_on_body = true,
+          hint = {
+            type = 'window',
+            float_opts = {
+              border = 'rounded',
+            },
+          },
+        },
+        body = '<leader>w',
+        heads = {
+          { 'w', '<C-W>p', { desc = 'Switch to other window', exit = true } },
+
+          { 'd', '<C-W>c', { desc = 'Close window' } },
+          { 'v', '<Cmd>vnew<Cr>', { desc = 'Split window right' } },
+          { 'h', '<Cmd>new<Cr>', { desc = 'Split window below' } },
+
+          { '<S-Right>', '<Cmd>vnew<Cr>', { desc = 'Split window right' } },
+          { '<S-Down>', '<Cmd>new<Cr>', { desc = 'Split window below' } },
+
+          { 's', '<C-W>x', { desc = 'Swap window with next' } },
+
+          { '=', '<C-W>=', { desc = 'Equalize windows' } },
+          { '>', '10<C-w>>', { desc = 'resize →' } },
+          { '<', '10<C-w><', { desc = 'resize ←' } },
+          { '+', '10<C-w>+', { desc = 'resize ↑' } },
+          { '-', '10<C-w>-', { desc = 'resize ↓' } },
+          -- This is just an alias for `-` incase it gets mistyped (no S- modifier)
+          { '_', '10<C-w>-', { desc = false } },
+
+          { '<Left>', '<C-w>h', { desc = 'Go to left window' } },
+          { '<Right>', '<C-w>l', { desc = 'Go to right window' } },
+          { '<Up>', '<C-w>k', { desc = 'Go to upper window' } },
+          { '<Down>', '<C-w>j', { desc = 'Go to lower window' } },
+
+          { '<Esc>', nil, { desc = 'Exit', exit = true } },
+          { 'q', nil, { desc = 'Exit', exit = true } },
+        },
+      }
+    end,
+  },
+
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
   -- This is often very useful to both group configuration, as well as handle
@@ -311,6 +386,7 @@ require('lazy').setup({
       -- delay between pressing a key and opening which-key (milliseconds)
       -- this setting is independent of vim.o.timeoutlen
       delay = 500,
+      styles = {},
       icons = {
         -- set icon mappings to true if you have a Nerd Font
         mappings = vim.g.have_nerd_font,
@@ -352,7 +428,7 @@ require('lazy').setup({
       spec = {
         { '<leader>s', group = '[S]earch' },
         { '<leader>t', group = '[T]oggle' },
-        { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
+        --{ '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
       },
     },
   },
@@ -388,37 +464,7 @@ require('lazy').setup({
       { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
     },
     config = function()
-      -- Telescope is a fuzzy finder that comes with a lot of different things that
-      -- it can fuzzy find! It's more than just a "file finder", it can search
-      -- many different aspects of Neovim, your workspace, LSP, and more!
-      --
-      -- The easiest way to use Telescope, is to start by doing something like:
-      --  :Telescope help_tags
-      --
-      -- After running this command, a window will open up and you're able to
-      -- type in the prompt window. You'll see a list of `help_tags` options and
-      -- a corresponding preview of the help.
-      --
-      -- Two important keymaps to use while in Telescope are:
-      --  - Insert mode: <c-/>
-      --  - Normal mode: ?
-      --
-      -- This opens a window that shows you all of the keymaps for the current
-      -- Telescope picker. This is really useful to discover what Telescope can
-      -- do as well as how to actually do it!
-
-      -- [[ Configure Telescope ]]
-      -- See `:help telescope` and `:help telescope.setup()`
       require('telescope').setup {
-        -- You can put your default mappings / updates / etc. in here
-        --  All the info you're looking for is in `:help telescope.setup()`
-        --
-        -- defaults = {
-        --   mappings = {
-        --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-        --   },
-        -- },
-        -- pickers = {}
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
@@ -441,7 +487,15 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
-      vim.keymap.set('n', '<c-p><c-p>', builtin.find_files, { desc = '[S]earch [F]iles' })
+      vim.keymap.set('n', '<c-p>', builtin.find_files, { desc = '[S]earch [F]iles' })
+
+      local vsplitscope = function()
+        vim.cmd 'vs'
+        builtin.find_files()
+      end
+
+      vim.keymap.set('n', '<C-.>', vsplitscope)
+      vim.keymap.set('n', '<C-,>', '<Esc><Cmd>ConjureLogVSplit<CR>')
 
       vim.keymap.set('n', '<C-b>', '<Cmd>Neotree toggle<CR>')
 
@@ -691,9 +745,9 @@ require('lazy').setup({
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         -- ts_ls = {},
         --
-        -- clojure = {
-        --   filetype_overrides = { 'clj' },
-        -- },
+        clojure_lsp = {
+          filetype_overrides = { 'clj' },
+        },
         lua_ls = {
           -- cmd = { ... },
           -- filetypes = { ... },
@@ -921,14 +975,20 @@ require('lazy').setup({
 
   {
     'Olical/conjure',
+    init = function()
+      vim.g['conjure#extract#tree_sitter#enabled'] = true
 
-    -- Structural editing, optional
-    'guns/vim-sexp',
-    'tpope/vim-sexp-mappings-for-regular-people',
-    'tpope/vim-repeat',
-    'tpope/vim-surround',
+      vim.g['conjure#client#clojure#nrepl#eval#raw_out'] = true
+      vim.g['conjure#client#clojure#nrepl#connection#auto_repl#enabled'] = false
+      vim.g['conjure#log#wrap'] = true
+      vim.g['conjure#client#clojure#nrepl#eval#auto_require'] = true
+
+      -- vim.g['conjure#mapping#doc_word'] = false
+      -- vim.g['conjure#mapping#log_jump_to_latest'] = false
+    end,
   },
-
+  { 'tpope/vim-surround' },
+  { 'tpope/vim-repeat' },
   {
     'julienvincent/nvim-paredit',
     config = function()
@@ -936,8 +996,8 @@ require('lazy').setup({
 
       paredit.setup {
         keys = {
-          ['<c-l>'] = { paredit.api.barf_forwards, 'barf forwards' },
-          ['<c-j>'] = { paredit.api.slurp_forwards },
+          ['<C-j>'] = { paredit.api.barf_forwards, 'barf forwards' },
+          ['<C-k>'] = { paredit.api.slurp_forwards },
 
           ['<c-9>'] = {
             paredit.api.move_to_parent_form_start,
@@ -950,6 +1010,29 @@ require('lazy').setup({
             'move to parent form end',
             repeatable = false,
             mode = { 'n', 'v' },
+          },
+        },
+      }
+    end,
+  },
+
+  {
+    'akinsho/toggleterm.nvim',
+    version = '*',
+    opts = {--[[ things you want to change go here]]
+    },
+    config = function()
+      require('toggleterm').setup {
+        direction = 'float',
+        open_mapping = '<C-x>',
+        terminal_mappings = true,
+        start_in_insert = true,
+        highlights = {
+          Normal = {
+            guibg = '#0f1920',
+          },
+          NormalBorder = {
+            guifg = '#1f2930',
           },
         },
       }
@@ -970,17 +1053,80 @@ require('lazy').setup({
     ---@type neotree.Config?
     opts = {
       -- fill any relevant options here
-      coxpcall,
-      window = { position = 'right' },
+      window = { position = 'right', width = 40 },
     },
     config = function()
       require('neo-tree').setup {
+        coxpcall,
         filesystem = {
           window = {
+            width = 25,
             mappings = {
               ['<F5>'] = 'refresh',
               ['o'] = 'open',
+              ['c'] = 'close',
             },
+          },
+        },
+      }
+    end,
+  },
+  {
+    'nvim-lualine/lualine.nvim',
+    config = function()
+      require('lualine').setup {
+        lualine_a = {
+          {
+            'mode',
+            separator = { left = '', right = '' },
+            padding = { left = 1, right = 0 },
+          },
+        },
+        lualine_b = {
+          { 'branch' },
+        },
+        lualine_c = {
+          { '%=', padding = 0 },
+          {
+            'datetime',
+            style = '%H:%M ',
+            separator = { left = '', right = '' },
+            padding = 0,
+            color = function()
+              local mode = require('local.theme').get_mode()
+
+              return 'lualine_a_' .. mode
+            end,
+          },
+        },
+        lualine_x = {},
+        lualine_y = {
+          {
+            'filetype',
+            fmt = function(name)
+              return string.upper(name)
+            end,
+          },
+        },
+        lualine_z = {
+          {
+            function()
+              local lnum, col = unpack(vim.api.nvim_win_get_cursor(0))
+              local max_lnum = vim.api.nvim_buf_line_count(0)
+
+              local ruler
+              if lnum == 1 then
+                ruler = 'TOP'
+              elseif lnum == max_lnum then
+                ruler = 'BOT'
+              else
+                ruler = string.format('%2d%%%%', math.floor(100 * lnum / max_lnum))
+              end
+
+              return string.format('%' .. string.len(vim.bo.textwidth) .. 'd %s', col + 1, ruler)
+            end,
+            separator = { left = '', right = '' },
+            padding = { left = 0, right = 1 },
           },
         },
       }
@@ -1067,10 +1213,37 @@ require('lazy').setup({
     end,
   },
   {
-    'HiPhish/rainbow-delimiters.nvim',
-    lazy = false,
-    main = 'rainbow-delimiters.setup',
-    opts = {},
+    'petertriho/nvim-scrollbar',
+    event = 'BufReadPost',
+    enabled = true,
+    config = function()
+      require('scrollbar').setup {
+        handle = {
+          blend = 0,
+        },
+        marks = {
+          Cursor = {
+            text = '',
+          },
+        },
+        handlers = {
+          gitsigns = true,
+        },
+        hide_if_all_visible = true,
+        excluded_buftypes = {
+          'nofile',
+        },
+        excluded_filetypes = {
+          'cmp_docs',
+          'cmp_menu',
+          'noice',
+          'prompt',
+          'neo-tree',
+          'neo-tree-popup',
+          'DiffviewFiles',
+        },
+      }
+    end,
   },
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
@@ -1090,7 +1263,8 @@ require('lazy').setup({
       },
       indent = { enable = true, disable = { 'ruby' } },
     },
-    { 'luochen1990/rainbow' },
+    { 'nvim-treesitter/nvim-treesitter-textobjects' },
+    { 'nvim-treesitter/nvim-treesitter-context' },
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:
     --
@@ -1163,27 +1337,8 @@ require('lazy').setup({
     },
   },
 
-  -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
-  -- init.lua. If you want these files, they are in the repository, so you can just download them and
-  -- place them in the correct locations.
-
-  -- NOTE: Next step on your Neovim journey: Add/Configure additional plugins for Kickstart
-  --
-  --  Here are some example plugins that I've included in the Kickstart repository.
-  --  Uncomment any of the lines below to enable them (you will need to restart nvim).
-  --
-  -- require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
-  -- require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.neo-tree',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
-
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
-  --
-  --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!
@@ -1222,6 +1377,21 @@ vim.cmd [[
   highlight Normal ctermbg=none
   highlight NonText ctermbg=none
   highlight Normal guifg=none
+	highlight Keyword ctermbg=none guibg=none
+	highlight String ctermbg=none guibg=none
+	highlight LspReferenceText ctermbg=none guibg=none
+	highlight IlluminatedWordText ctermbg=none  guibg=none
+
+	highlight LspReferenceRead ctermbg=none guibg=none
+	highlight IlluminatedWordRead ctermbg=none guibg=none
+
+	highlight LspReferenceWrite ctermbg=none guibg=none
+	highlight IlluminatedWordRead ctermbg=none guibg=none
+
+	highlight WhichKeyNormal guibg=#0f1920 ctermbg=none
+	highlight BlinkCmpMenu guibg=#0f1920 ctermbg=none
+
 ]]
 
-vim.o.cursorline = true
+vim.keymap.set('n', '<C-c><C-c>', '<Esc><Cmd>ConjureCljConnectPortFile<CR>')
+vim.keymap.set('n', '<C-c><C-d>', '<Esc><Cmd>ConjureCljDisconnect<CR>')
