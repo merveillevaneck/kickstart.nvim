@@ -184,7 +184,7 @@ vim.o.confirm = true
 -- vim.keymap.set('')
 
 -- Diagnostic keymaps
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+-- vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -465,6 +465,11 @@ require('lazy').setup({
     },
     config = function()
       require('telescope').setup {
+        pickers = {
+          find_files = {
+            hidden = true,
+          },
+        },
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
@@ -487,7 +492,11 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
-      vim.keymap.set('n', '<c-p>', builtin.find_files, { desc = '[S]earch [F]iles' })
+
+      local findfiles = function()
+        builtin.find_files { hidden = true, no_ignore = true }
+      end
+      vim.keymap.set('n', '<c-p>', findfiles, { desc = '[S]earch [F]iles' })
 
       local vsplitscope = function()
         vim.cmd 'vs'
@@ -497,7 +506,7 @@ require('lazy').setup({
       vim.keymap.set('n', '<C-.>', vsplitscope)
       vim.keymap.set('n', '<C-,>', '<Esc><Cmd>ConjureLogVSplit<CR>')
 
-      vim.keymap.set('n', '<C-b>', '<Cmd>Neotree toggle<CR>')
+      -- vim.keymap.set('n', '<C-b>', '<Cmd>Neotree toggle<CR>')
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -996,44 +1005,8 @@ require('lazy').setup({
 
       paredit.setup {
         keys = {
-          ['<C-j>'] = { paredit.api.barf_forwards, 'barf forwards' },
-          ['<C-k>'] = { paredit.api.slurp_forwards },
-
-          ['<c-9>'] = {
-            paredit.api.move_to_parent_form_start,
-            'move to parent form start',
-            repeatable = false,
-            mode = { 'n', 'v' },
-          },
-          ['<c-0>'] = {
-            paredit.api.move_to_parent_form_end,
-            'move to parent form end',
-            repeatable = false,
-            mode = { 'n', 'v' },
-          },
-        },
-      }
-    end,
-  },
-
-  {
-    'akinsho/toggleterm.nvim',
-    version = '*',
-    opts = {--[[ things you want to change go here]]
-    },
-    config = function()
-      require('toggleterm').setup {
-        direction = 'float',
-        open_mapping = '<C-x>',
-        terminal_mappings = true,
-        start_in_insert = true,
-        highlights = {
-          Normal = {
-            guibg = '#0f1920',
-          },
-          NormalBorder = {
-            guifg = '#1f2930',
-          },
+          --['<C-[>'] = { paredit.api_barf_forwards, 'barf forwards' },
+          --['<C-]>'] = { paredit.api.slurp_forwards, 'slurp forwards' },
         },
       }
     end,
@@ -1059,12 +1032,15 @@ require('lazy').setup({
       require('neo-tree').setup {
         coxpcall,
         filesystem = {
+          filtered_items = {
+            visible = true,
+          },
           window = {
             width = 25,
             mappings = {
               ['<F5>'] = 'refresh',
               ['o'] = 'open',
-              ['c'] = 'close',
+              --['c'] = 'close',
             },
           },
         },
@@ -1136,7 +1112,18 @@ require('lazy').setup({
   {
     'windwp/nvim-autopairs',
     event = 'InsertEnter',
-    config = true,
+    config = function()
+      local Rule = require 'nvim-autopairs.rule'
+      local pairs = require 'nvim-autopairs'
+
+      pairs.setup {
+        check_ts = true,
+        enable_check_bracket_line = false,
+      }
+
+      pairs.get_rules('`')[1].not_filetypes = { 'clojure' }
+      pairs.get_rules("'")[1].not_filetypes = { 'clojure', 'rust' }
+    end,
     -- use opts = {} for passing setup options
     -- this is equivalent to setup({}) function
   },
@@ -1273,6 +1260,44 @@ require('lazy').setup({
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
     -- default configuration
     {
+      'CRAG666/betterTerm.nvim',
+      event = 'VeryLazy',
+      opts = {
+        position = 'bot',
+        size = 20,
+      },
+      keys = {
+        {
+          mode = { 'n', 't' },
+          '<C-;>',
+          function()
+            require('betterTerm').open()
+          end,
+        },
+        {
+          mode = { 'n', 't' },
+          '<leader>1',
+          function()
+            require('betterTerm').open(0)
+          end,
+        },
+        {
+          mode = { 'n', 't' },
+          '<leader>2',
+          function()
+            require('betterTerm').open(1)
+          end,
+        },
+        {
+          mode = { 'n', 't' },
+          '<leader>3',
+          function()
+            require('betterTerm').open(2)
+          end,
+        },
+      },
+    },
+    {
       'RRethy/vim-illuminate',
       config = function()
         require('illuminate').configure {
@@ -1345,6 +1370,7 @@ require('lazy').setup({
   -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
   -- you can continue same window with `<space>sr` which resumes last telescope search
 }, {
+
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
     -- default lazy.nvim defined Nerd Font icons, otherwise define a unicode icons table
@@ -1395,3 +1421,28 @@ vim.cmd [[
 
 vim.keymap.set('n', '<C-c><C-c>', '<Esc><Cmd>ConjureCljConnectPortFile<CR>')
 vim.keymap.set('n', '<C-c><C-d>', '<Esc><Cmd>ConjureCljDisconnect<CR>')
+
+vim.keymap.set('t', '<Esc>', '<Esc>', opts)
+-- vim.keymap.set('t', 'jk', [[<C-\><C-n>]], opts)
+vim.keymap.set('t', '<C-h>', [[<Cmd>wincmd h<CR>]], opts)
+vim.keymap.set('t', '<C-j>', [[<Cmd>wincmd j<CR>]], opts)
+vim.keymap.set('t', '<C-k>', [[<Cmd>wincmd k<CR>]], opts)
+vim.keymap.set('t', '<C-l>', [[<Cmd>wincmd l<CR>]], opts)
+vim.keymap.set('t', '<C-w>', [[<C-\><C-n><C-w>]], opts)
+
+vim.keymap.set('n', '<C-b>', function()
+  local manager = require 'neo-tree.sources.manager'
+  local renderer = require 'neo-tree.ui.renderer'
+
+  local state = manager.get_state 'filesystem'
+  local window_exists = renderer.window_exists(state)
+
+  if window_exists then
+    vim.cmd 'Neotree close'
+  else
+    vim.cmd 'Neotree show'
+  end
+end)
+
+--
+--
