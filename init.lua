@@ -755,7 +755,7 @@ require('lazy').setup({
         -- ts_ls = {},
         --
         clojure_lsp = {
-          filetype_overrides = { 'clj' },
+          filetype_overrides = { 'clj', 'bb' },
         },
         lua_ls = {
           -- cmd = { ... },
