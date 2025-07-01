@@ -316,6 +316,14 @@ require('lazy').setup({
   },
 
   {
+    'FabijanZulj/blame.nvim',
+    lazy = false,
+    config = function()
+      require('blame').setup {}
+    end,
+  },
+
+  {
     'nvimtools/hydra.nvim',
     event = 'VeryLazy',
     config = function()
@@ -470,6 +478,9 @@ require('lazy').setup({
             hidden = true,
           },
         },
+				layout_config = {
+					vertical = { width = 0.5 }
+				},
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
@@ -488,19 +499,18 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
       vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
-      vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
+      --vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
 
-      local findfiles = function()
-        builtin.find_files { hidden = true, no_ignore = true }
-      end
-      vim.keymap.set('n', '<c-p>', findfiles, { desc = '[S]earch [F]iles' })
+      --local findfiles = function()
+      --  builtin.find_files { hidden = true, no_ignore = true }
+      --end
+      --vim.keymap.set('n', '<c-p>', findfiles, { desc = '[S]earch [F]iles' })
 
       local vsplitscope = function()
         vim.cmd 'vs'
-        builtin.find_files()
       end
 
       vim.keymap.set('n', '<C-.>', vsplitscope)
@@ -516,6 +526,10 @@ require('lazy').setup({
           previewer = false,
         })
       end, { desc = '[/] Fuzzily search in current buffer' })
+
+			--vim.keymap.set('n', '<leader>sg', function()
+			--	local fzf = require('fzf-lua')
+			--end)
 
       -- It's also possible to pass additional configuration options.
       --  See `:help telescope.builtin.live_grep()` for information about particular keys
@@ -809,46 +823,46 @@ require('lazy').setup({
     end,
   },
 
-  { -- Autoformat
-    'stevearc/conform.nvim',
-    event = { 'BufWritePre' },
-    cmd = { 'ConformInfo' },
-    keys = {
-      {
-        '<leader>f',
-        function()
-          require('conform').format { async = true, lsp_format = 'fallback' }
-        end,
-        mode = '',
-        desc = '[F]ormat buffer',
-      },
-    },
-    opts = {
-      notify_on_error = false,
-      format_on_save = function(bufnr)
-        -- Disable "format_on_save lsp_fallback" for languages that don't
-        -- have a well standardized coding style. You can add additional
-        -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
-        if disable_filetypes[vim.bo[bufnr].filetype] then
-          return nil
-        else
-          return {
-            timeout_ms = 500,
-            lsp_format = 'fallback',
-          }
-        end
-      end,
-      formatters_by_ft = {
-        lua = { 'stylua' },
-        -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
-        --
-        -- You can use 'stop_after_first' to run the first available formatter from the list
-        -- javascript = { "prettierd", "prettier", stop_after_first = true },
-      },
-    },
-  },
+  --{ -- Autoformat
+  --  'stevearc/conform.nvim',
+  --  event = { 'BufWritePre' },
+  --  cmd = { 'ConformInfo' },
+  --  keys = {
+  --    {
+  --      '<leader>f',
+  --      function()
+  --        require('conform').format { async = true, lsp_format = 'fallback' }
+  --      end,
+  --      mode = '',
+  --      desc = '[F]ormat buffer',
+  --    },
+  --  },
+  --  opts = {
+  --    notify_on_error = false,
+  --    format_on_save = function(bufnr)
+  --      -- Disable "format_on_save lsp_fallback" for languages that don't
+  --      -- have a well standardized coding style. You can add additional
+  --      -- languages here or re-enable it for the disabled ones.
+  --      local disable_filetypes = { c = true, cpp = true }
+  --      if disable_filetypes[vim.bo[bufnr].filetype] then
+  --        return nil
+  --      else
+  --        return {
+  --          timeout_ms = 500,
+  --          lsp_format = 'fallback',
+  --        }
+  --      end
+  --    end,
+  --    formatters_by_ft = {
+  --      lua = { 'stylua' },
+  --      -- Conform can also run multiple formatters sequentially
+  --      -- python = { "isort", "black" },
+  --      --
+  --      -- You can use 'stop_after_first' to run the first available formatter from the list
+  --      -- javascript = { "prettierd", "prettier", stop_after_first = true },
+  --    },
+  --  },
+  --},
 
   { -- Autocompletion
     'saghen/blink.cmp',
@@ -965,22 +979,24 @@ require('lazy').setup({
     end,
   },
 
-  {
-    'olivercederborg/poimandres.nvim',
-    lazy = false,
-    priority = 1000,
-    config = function()
-      require('poimandres').setup {
-        -- leave this setup function empty
-        -- for default config.
-      }
-    end,
+  --  {
+  --    'olivercederborg/poimandres.nvim',
+  --    lazy = false,
+  --    priority = 1000,
+  --    config = function()
+  --      require('poimandres').setup {
+  --        -- leave this setup function empty
+  --        -- for default config.
+  --      }
+  --    end,
+  --
+  --    -- optionally set the colorscheme within lazy config
+  --    init = function()
+  --      vim.cmd 'colorscheme poimandres'
+  --    end,
+  --  },
 
-    -- optionally set the colorscheme within lazy config
-    init = function()
-      vim.cmd 'colorscheme poimandres'
-    end,
-  },
+  { 'ellisonleao/gruvbox.nvim', priority = 1000, config = true },
 
   {
     'Olical/conjure',
@@ -1012,41 +1028,7 @@ require('lazy').setup({
     end,
   },
 
-  {
-    'nvim-neo-tree/neo-tree.nvim',
-    branch = 'v3.x',
-    dependencies = {
-      'nvim-lua/plenary.nvim',
-      'nvim-tree/nvim-web-devicons', -- not strictly required, but recommended
-      'MunifTanjim/nui.nvim',
-      -- { '3rd/image.nvim', opts = {} }, -- Optional image support in preview window: See `# Preview Mode` for more information
-    },
-    lazy = false, -- neo-tree will lazily load itself
-    ---@module "neo-tree"
-    ---@type neotree.Config?
-    opts = {
-      -- fill any relevant options here
-      window = { position = 'right', width = 40 },
-    },
-    config = function()
-      require('neo-tree').setup {
-        coxpcall,
-        filesystem = {
-          filtered_items = {
-            visible = true,
-          },
-          window = {
-            width = 25,
-            mappings = {
-              ['<F5>'] = 'refresh',
-              ['o'] = 'open',
-              --['c'] = 'close',
-            },
-          },
-        },
-      }
-    end,
-  },
+  
   {
     'nvim-lualine/lualine.nvim',
     config = function()
@@ -1128,28 +1110,6 @@ require('lazy').setup({
     -- this is equivalent to setup({}) function
   },
 
-  { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
-    config = function()
-      ---@diagnostic disable-next-line: missing-fields
-      require('tokyonight').setup {
-        styles = {
-          comments = { italic = false }, -- Disable italics in comments
-        },
-      }
-
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'poimandres'
-    end,
-  },
-
   {
     'xiyaowong/transparent.nvim',
     config = function()
@@ -1199,39 +1159,39 @@ require('lazy').setup({
       --  Check out: https://github.com/echasnovski/mini.nvim
     end,
   },
-  {
-    'petertriho/nvim-scrollbar',
-    event = 'BufReadPost',
-    enabled = true,
-    config = function()
-      require('scrollbar').setup {
-        handle = {
-          blend = 0,
-        },
-        marks = {
-          Cursor = {
-            text = '',
-          },
-        },
-        handlers = {
-          gitsigns = true,
-        },
-        hide_if_all_visible = true,
-        excluded_buftypes = {
-          'nofile',
-        },
-        excluded_filetypes = {
-          'cmp_docs',
-          'cmp_menu',
-          'noice',
-          'prompt',
-          'neo-tree',
-          'neo-tree-popup',
-          'DiffviewFiles',
-        },
-      }
-    end,
-  },
+  --{
+  --  'petertriho/nvim-scrollbar',
+  --  event = 'BufReadPost',
+  --  enabled = true,
+  --  config = function()
+  --    require('scrollbar').setup {
+  --      handle = {
+  --        blend = 0,
+  --      },
+  --      marks = {
+  --        Cursor = {
+  --          text = '',
+  --        },
+  --      },
+  --      handlers = {
+  --        gitsigns = true,
+  --      },
+  --      hide_if_all_visible = true,
+  --      excluded_buftypes = {
+  --        'nofile',
+  --      },
+  --      excluded_filetypes = {
+  --        'cmp_docs',
+  --        'cmp_menu',
+  --        'noice',
+  --        'prompt',
+  --        'neo-tree',
+  --        'neo-tree-popup',
+  --        'DiffviewFiles',
+  --      },
+  --    }
+  --  end,
+  --},
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
@@ -1361,6 +1321,83 @@ require('lazy').setup({
       end,
     },
   },
+	{
+    "ibhagwan/fzf-lua",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    config = function()
+      local fzf = require("fzf-lua")
+      fzf.setup({
+        winopts = {
+          preview = {
+            layout = "vertical",
+            delay = 0,
+            vertical = "up:60%",
+          },
+        },
+
+        fzf_opts = {
+          ["--cycle"] = true,
+          ["--pointer"] = "❯",
+          ["--marker"] = "❯",
+          ["--layout"] = "default",
+        },
+
+        fzf_colors = {
+          ["gutter"] = "-1",
+        },
+
+        keymap = {
+          fzf = {
+            ["ctrl-q"] = "select-all+accept",
+            ["alt-a"] = "toggle",
+            ["alt-A"] = "toggle-all",
+          },
+        },
+      })
+
+      vim.keymap.set("n", "<C-p>", function()
+        fzf.files({
+          prompt = "❯ ",
+          header = false,
+          cwd_prompt = false,
+          ignore_current_file = true,
+
+          winopts = {
+            height = 0.70,
+            width = 0.70,
+            row = 0.33,
+            col = 0.33,
+          },
+        })
+      end, { silent = true, desc = "Find files" })
+
+      vim.keymap.set("n", "<leader>sg", function()
+        fzf.live_grep({
+          keymap = {
+            fzf = {
+              ["ctrl-q"] = "select-all+accept",
+              ["alt-a"] = "toggle",
+            },
+          },
+        })
+      end, { silent = true, desc = "Find" })
+
+      vim.keymap.set("n", "<leader>ffff", function()
+        fzf.grep_project({ resume = true })
+      end, { silent = true, desc = "Find" })
+
+      vim.keymap.set("n", "<leader>/", function()
+        fzf.grep_curbuf()
+      end, { silent = true, desc = "Find" })
+    end,
+  },
+
+	{
+		'nvim-tree/nvim-tree.lua',
+		config = function()
+			require('nvim-tree').setup()
+		end
+	},
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
@@ -1417,6 +1454,8 @@ vim.cmd [[
 	highlight WhichKeyNormal guibg=#0f1920 ctermbg=none
 	highlight BlinkCmpMenu guibg=#0f1920 ctermbg=none
 
+	colorscheme randomhue
+
 ]]
 
 vim.keymap.set('n', '<C-c><C-c>', '<Esc><Cmd>ConjureCljConnectPortFile<CR>')
@@ -1431,18 +1470,24 @@ vim.keymap.set('t', '<C-l>', [[<Cmd>wincmd l<CR>]], opts)
 vim.keymap.set('t', '<C-w>', [[<C-\><C-n><C-w>]], opts)
 
 vim.keymap.set('n', '<C-b>', function()
-  local manager = require 'neo-tree.sources.manager'
-  local renderer = require 'neo-tree.ui.renderer'
-
-  local state = manager.get_state 'filesystem'
-  local window_exists = renderer.window_exists(state)
-
-  if window_exists then
-    vim.cmd 'Neotree close'
-  else
-    vim.cmd 'Neotree show'
-  end
+	vim.cmd[[
+	NvimTreeToggle
+	]]
 end)
+
+--vim.keymap.set('n', '<C-b>', function()
+--  local manager = require 'neo-tree.sources.manager'
+--  local renderer = require 'neo-tree.ui.renderer'
+--
+--  local state = manager.get_state 'filesystem'
+--  local window_exists = renderer.window_exists(state)
+--
+--  if window_exists then
+--    vim.cmd 'Neotree close'
+--  else
+--    vim.cmd 'Neotree show'
+--  end
+--end)
 
 --
 --
